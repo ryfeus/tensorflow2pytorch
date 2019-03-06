@@ -13,7 +13,7 @@ mmconvert -sf tensorflow -in imagenet_vgg19.ckpt.meta -iw imagenet_vgg19.ckpt --
 
 ## Compare model results
 
-You can use main.py to compare models' predictions. You will need to keep in mind the following parameters:
+You can use index.py to compare models' predictions. You will need to keep in mind the following parameters:
 
 Tensorflow pretrained model:
 
