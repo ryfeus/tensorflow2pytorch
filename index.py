@@ -64,6 +64,43 @@ def runPytrochCheckpoint(torchimage,strModelMetaPath,strModelCheckpointPath):
     outTorch = the_model(torchimage).data.cpu().numpy()
     return outTorch
 
+def runCaffePretrained(npimage,strModelMetaPath,strModelPath):
+    import caffe
+    caffe.set_mode_cpu()
+    net = caffe.Net(strModelMetaPath,strModelPath, caffe.TEST)
+
+    net.blobs['data'].reshape(*im_input.shape)
+    net.blobs['data'].data[...] = im_input
+    outCaffe = net.forward()['prob']
+    return outCaffe
+
+def getCaffeModelWeights(strModelMetaPath,strModelPath,strTensor):
+    import caffe
+    caffe.set_mode_cpu()
+    net = caffe.Net(strModelMetaPath,strModelPath, caffe.TEST)
+    return net.params[strTensor][0].data[...]
+
+def getTensorflowPretrainedWeights(strTensor,strModelPath,strModelName):
+    with tf.gfile.FastGFile(strModelPath, 'rb') as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+        tf.import_graph_def(graph_def, name=strModelName)
+    g = tf.get_default_graph()
+    sess = tf.InteractiveSession()
+    npTensor = g.get_tensor_by_name(strTensorName).eval()
+    sess.close()
+    return npTensor
+
+def getTensorflowCheckpointWeights(strTensor,strModelMetaPath,strModelCheckpointPath):
+    sess = tf.InteractiveSession()
+    saver = tf.train.import_meta_graph(strModelMetaPath)
+    saver.restore(sess, strModelCheckpointPath)
+    g = tf.get_default_graph()
+
+    tensorVar = [v for v in tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES) if v.name == strTensor]
+    npTensor = tensorVar[0].read_value().eval()
+    sess.close()
+    return npTensor
 
 def preprocessImage(imagePath):
     image = PIL.Image.open(imagePath).convert('RGB')
